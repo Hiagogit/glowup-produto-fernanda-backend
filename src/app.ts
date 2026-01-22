@@ -20,6 +20,7 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
   'https://jovemmistica.com.br',
   'https://www.jovemmistica.com.br',
   'https://api.jovemmistica.com.br',
+  'https://app.jovemistica.com.br', // Frontend principal
 ];
 
 app.use(cors({

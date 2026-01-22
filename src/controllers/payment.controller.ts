@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { klivoService } from '../services/klivo.service';
-import { supabase } from '../config/supabase';
+import { supabaseAdmin } from '../config/supabase';
 
 export class PaymentController {
   /**
@@ -41,7 +41,7 @@ export class PaymentController {
       });
 
       // Salvar transação no banco de dados  
-      const { data: paymentRecord, error: dbError} = await supabase
+      const { data: paymentRecord, error: dbError} = await supabaseAdmin
         .from('payments')
         .insert({
           transaction_id: transaction.hash || transaction.id, // Usar hash
@@ -115,7 +115,7 @@ export class PaymentController {
 
       // Atualizar status no banco se necessário
       if (transaction.status === 'paid') {
-        await supabase
+        await supabaseAdmin
           .from('payments')
           .update({ 
             status: 'paid',
@@ -176,7 +176,7 @@ export class PaymentController {
       console.log(`📝 Processando webhook - Transação: ${transactionId}, Status: ${status}, Evento: ${event}`);
 
       // Atualizar status no banco
-      const { data: payment, error: updateError } = await supabase
+      const { data: payment, error: updateError } = await supabaseAdmin
         .from('payments')
         .update({ 
           status: status,
@@ -234,7 +234,7 @@ export class PaymentController {
    */
   async listPayments(req: Request, res: Response) {
     try {
-      const { data: payments, error } = await supabase
+      const { data: payments, error } = await supabaseAdmin
         .from('payments')
         .select('*')
         .order('created_at', { ascending: false })
