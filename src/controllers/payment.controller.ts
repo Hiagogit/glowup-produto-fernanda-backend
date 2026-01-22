@@ -110,26 +110,27 @@ export class PaymentController {
         });
       }
 
-      // Consultar transação na Klivo
-      const transaction = await klivoService.getTransaction(transactionId);
+      // Consultar status no banco (já atualizado pelo webhook)
+      const { data: payment, error: dbError } = await supabaseAdmin
+        .from('payments')
+        .select('transaction_id, status, amount')
+        .eq('transaction_id', transactionId)
+        .single();
 
-      // Atualizar status no banco se necessário
-      if (transaction.status === 'paid') {
-        await supabaseAdmin
-          .from('payments')
-          .update({ 
-            status: 'paid',
-            paid_at: new Date().toISOString()
-          })
-          .eq('transaction_id', transactionId);
+      if (dbError || !payment) {
+        console.error('❌ Erro ao buscar pagamento:', dbError);
+        return res.status(404).json({
+          success: false,
+          error: 'Pagamento não encontrado',
+        });
       }
 
       return res.status(200).json({
         success: true,
         data: {
-          transactionId: transaction.id,
-          status: transaction.status,
-          amount: transaction.amount,
+          transactionId: payment.transaction_id,
+          status: payment.status,
+          amount: payment.amount,
         },
       });
     } catch (error: any) {
