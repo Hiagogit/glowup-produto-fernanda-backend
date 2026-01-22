@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const KLIVO_API_URL = 'https://api.klivopay.com.br/public/v1';
+const KLIVO_API_URL = 'https://api.klivopay.com.br/public';
 const KLIVO_API_TOKEN = process.env.KLIVO_API_TOKEN || 'qIA6MaRT2FyLJxF1aISCWzGqkhkcq3CB5sdLSDT8LfNABx0bzTBHNAgvLXFH';
 
 interface CreateTransactionPayload {
