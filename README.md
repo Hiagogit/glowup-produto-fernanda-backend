@@ -377,16 +377,52 @@ Importe a coleção de endpoints acima ou use a interface gráfica.
 - `npm run lint` - Executa linter
 - `npm run format` - Formata código com Prettier
 
-## 🚀 Deploy
+## 🚀 Deploy na Vercel
 
-### Variáveis de Ambiente em Produção
+### Passo a Passo
 
-Certifique-se de configurar:
-- `NODE_ENV=production`
-- Todas as variáveis do `.env.example`
-- URLs de produção em `ALLOWED_ORIGINS` e `APP_URL`
+1. **Instalar Vercel CLI** (opcional)
+```bash
+npm i -g vercel
+```
 
-### Plataformas Recomendadas
+2. **Deploy via GitHub** (Recomendado)
+   - Acesse [vercel.com](https://vercel.com)
+   - Faça login com GitHub
+   - Clique em "Add New Project"
+   - Importe o repositório: `glowup-produto-fernanda-backend`
+   - Configure as variáveis de ambiente (veja abaixo)
+   - Clique em "Deploy"
+
+3. **Deploy via CLI**
+```bash
+vercel
+```
+
+### Variáveis de Ambiente na Vercel
+
+Configure as seguintes variáveis em **Settings** → **Environment Variables**:
+
+```
+NODE_ENV=production
+PORT=3001
+SUPABASE_URL=https://seu-projeto.supabase.co
+SUPABASE_ANON_KEY=sua-anon-key
+SUPABASE_SERVICE_ROLE_KEY=sua-service-role-key
+RESEND_API_KEY=re_sua_api_key
+ALLOWED_ORIGINS=https://seu-frontend.vercel.app
+FROM_EMAIL=noreply@seudominio.com
+SUPPORT_EMAIL=support@seudominio.com
+APP_URL=https://seu-frontend.vercel.app
+ANTHROPIC_API_KEY=sua-anthropic-key
+GEMINI_API_KEY=sua-gemini-key
+```
+
+### Configuração do vercel.json
+
+O projeto já inclui um arquivo `vercel.json` configurado para TypeScript e Express.
+
+### Outras Plataformas
 
 - **Railway**
 - **Render**
