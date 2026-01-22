@@ -2,12 +2,8 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import routes from './routes';
-
-// Carrega variáveis de ambiente
-dotenv.config();
 
 const app = express();
 
