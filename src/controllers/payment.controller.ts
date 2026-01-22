@@ -40,21 +40,21 @@ export class PaymentController {
         },
       });
 
-      // Salvar transação no banco de dados
+      // Salvar transação no banco de dados  
       const { data: paymentRecord, error: dbError} = await supabase
         .from('payments')
         .insert({
-          transaction_id: transaction.id,
+          transaction_id: transaction.hash || transaction.id, // Usar hash
           transaction_token: transaction.token,
           amount: transaction.amount,
-          status: transaction.status,
-          method: transaction.method,
+          status: transaction.payment_status || transaction.status,
+          method: transaction.method || transaction.payment_method,
           customer_name: name,
           customer_email: email,
           customer_cpf: cpf,
           report_data: reportData,
-          pix_code: transaction.pix?.code,
-          pix_url: transaction.pix?.url,
+          pix_code: transaction.pix?.pix_qr_code,
+          pix_url: transaction.pix?.pix_url,
           pix_expires_at: transaction.pix?.expires_at,
           created_at: transaction.created_at,
           transaction_url: transaction.url,
@@ -71,15 +71,16 @@ export class PaymentController {
       return res.status(200).json({
         success: true,
         data: {
-          transactionId: transaction.id,
+          transactionId: transaction.hash || transaction.id, // Retornar hash
+          transactionHash: transaction.hash,
           transactionToken: transaction.token,
           amount: transaction.amount,
-          status: transaction.status,
-          method: transaction.method,
+          status: transaction.payment_status || transaction.status,
+          method: transaction.payment_method || transaction.method,
           pix: transaction.pix ? {
-            qrCode: transaction.pix.code,
-            qrCodeUrl: transaction.pix.url,
-            copyPaste: transaction.pix.code, // O code é o Pix Copia e Cola
+            qrCode: transaction.pix.pix_qr_code,
+            qrCodeUrl: transaction.pix.pix_url,
+            copyPaste: transaction.pix.pix_qr_code,
             expiresAt: transaction.pix.expires_at,
           } : undefined,
           transactionUrl: transaction.url,

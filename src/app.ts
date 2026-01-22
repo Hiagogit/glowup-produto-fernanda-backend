@@ -13,8 +13,13 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
   'http://localhost:8080',
   'http://localhost:8081',
   'http://localhost:8082',
+  'http://localhost:8083',
+  'http://localhost:8084',
   'http://localhost:3000',
   'http://localhost:4173', // Vite preview
+  'https://jovemmistica.com.br',
+  'https://www.jovemmistica.com.br',
+  'https://api.jovemmistica.com.br',
 ];
 
 app.use(cors({
