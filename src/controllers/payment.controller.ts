@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { klivoService } from '../services/klivo.service';
 import { supabaseAdmin } from '../config/supabase';
+import { emailService } from '../services/email.service';
 
 export class PaymentController {
   /**
@@ -65,6 +66,20 @@ export class PaymentController {
       if (dbError) {
         console.error('❌ Erro ao salvar pagamento no banco:', dbError);
         // Não retornar erro ao cliente, apenas log
+      }
+
+      // Enviar email com QR Code PIX (não bloquear resposta se falhar)
+      if (transaction.pix?.pix_qr_code && transaction.pix?.pix_url) {
+        emailService.sendPixPaymentEmail({
+          to: email,
+          name,
+          amount: transaction.amount,
+          pixCode: transaction.pix.pix_qr_code,
+          pixUrl: transaction.pix.pix_url,
+          expiresAt: (transaction.pix as any).expires_at || null,
+        }).catch((error) => {
+          console.error('⚠️ Erro ao enviar email PIX (não bloqueante):', error.message);
+        });
       }
 
       // Retornar dados do PIX para o frontend
@@ -201,12 +216,20 @@ export class PaymentController {
         console.log('💰 Valor:', transaction.amount / 100, 'R$');
         console.log('👤 Cliente:', customer?.name, '-', customer?.email);
         
-        // TODO: Implementar lógica de geração e envio do relatório
-        // 1. Gerar PDF do relatório com os dados salvos
-        // 2. Enviar email com link de acesso
-        // 3. Criar entrada na tabela de relatórios liberados
+        // Usar transaction_id como slug do relatório
+        const reportSlug = payment.transaction_id;
+        
+        // Enviar email com acesso ao relatório (não bloqueante)
+        emailService.sendReportAccessEmail({
+          to: payment.customer_email,
+          name: payment.customer_name,
+          reportSlug: reportSlug,
+        }).catch((error) => {
+          console.error('⚠️ Erro ao enviar email de acesso (não bloqueante):', error.message);
+        });
         
         console.log('📊 Relatório liberado para:', payment.customer_email);
+        console.log('🔗 Link do relatório:', `/relatorio/${reportSlug}`);
       } else if (status === 'refused' || status === 'antifraud' || status === 'chargedback') {
         console.log('❌ Pagamento não aprovado:', status);
       } else if (status === 'refunded') {
