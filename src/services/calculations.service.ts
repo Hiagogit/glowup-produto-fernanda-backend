@@ -15,29 +15,32 @@ export const ARCANO_NOMES: Record<number, string> = {
   21: "O Mundo", 22: "O Louco"
 };
 
+// URL base para as imagens - configurável via variável de ambiente
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://app.jovemistica.com.br';
+
 export const ARCANO_IMAGES: Record<number, string> = {
-  1: "https://app.jovemistica.com.br/assets/arcano-mago.png",
-  2: "https://app.jovemistica.com.br/assets/arcano-sacerdotisa.png",
-  3: "https://app.jovemistica.com.br/assets/arcano-imperatriz.png",
-  4: "https://app.jovemistica.com.br/assets/arcano-imperador.png",
-  5: "https://app.jovemistica.com.br/assets/arcano-hierofante.png",
-  6: "https://app.jovemistica.com.br/assets/arcano-enamorados.png",
-  7: "https://app.jovemistica.com.br/assets/arcano-carro.png",
-  8: "https://app.jovemistica.com.br/assets/arcano-justica.png",
-  9: "https://app.jovemistica.com.br/assets/arcano-eremita.png",
-  10: "https://app.jovemistica.com.br/assets/arcano-roda.png",
-  11: "https://app.jovemistica.com.br/assets/arcano-forca.png",
-  12: "https://app.jovemistica.com.br/assets/arcano-enforcado.png",
-  13: "https://app.jovemistica.com.br/assets/arcano-morte.png",
-  14: "https://app.jovemistica.com.br/assets/arcano-temperanca.png",
-  15: "https://app.jovemistica.com.br/assets/arcano-diabo.png",
-  16: "https://app.jovemistica.com.br/assets/arcano-torre.png",
-  17: "https://app.jovemistica.com.br/assets/arcano-estrela.png",
-  18: "https://app.jovemistica.com.br/assets/arcano-lua.png",
-  19: "https://app.jovemistica.com.br/assets/arcano-sol.png",
-  20: "https://app.jovemistica.com.br/assets/arcano-julgamento.png",
-  21: "https://app.jovemistica.com.br/assets/arcano-mundo.png",
-  22: "https://app.jovemistica.com.br/assets/arcano-louco.png"
+  1: `${FRONTEND_URL}/assets/arcano-mago.png`,
+  2: `${FRONTEND_URL}/assets/arcano-sacerdotisa.png`,
+  3: `${FRONTEND_URL}/assets/arcano-imperatriz.png`,
+  4: `${FRONTEND_URL}/assets/arcano-imperador.png`,
+  5: `${FRONTEND_URL}/assets/arcano-hierofante.png`,
+  6: `${FRONTEND_URL}/assets/arcano-enamorados.png`,
+  7: `${FRONTEND_URL}/assets/arcano-carro.png`,
+  8: `${FRONTEND_URL}/assets/arcano-justica.png`,
+  9: `${FRONTEND_URL}/assets/arcano-eremita.png`,
+  10: `${FRONTEND_URL}/assets/arcano-roda.png`,
+  11: `${FRONTEND_URL}/assets/arcano-forca.png`,
+  12: `${FRONTEND_URL}/assets/arcano-enforcado.png`,
+  13: `${FRONTEND_URL}/assets/arcano-morte.png`,
+  14: `${FRONTEND_URL}/assets/arcano-temperanca.png`,
+  15: `${FRONTEND_URL}/assets/arcano-diabo.png`,
+  16: `${FRONTEND_URL}/assets/arcano-torre.png`,
+  17: `${FRONTEND_URL}/assets/arcano-estrela.png`,
+  18: `${FRONTEND_URL}/assets/arcano-lua.png`,
+  19: `${FRONTEND_URL}/assets/arcano-sol.png`,
+  20: `${FRONTEND_URL}/assets/arcano-julgamento.png`,
+  21: `${FRONTEND_URL}/assets/arcano-mundo.png`,
+  22: `${FRONTEND_URL}/assets/arcano-louco.png`
 };
 
 export const ARCANO_KEYWORDS: Record<number, { luz: string[]; sombra: string[]; energia: string }> = {
