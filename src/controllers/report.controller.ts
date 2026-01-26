@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import { supabaseAdmin } from '../config/supabase';
-import { anthropicService } from '../services/anthropic.service';
-import { geminiService } from '../services/gemini.service';
+import { wrapWithFullDocument } from '../services/htmlGenerator.service';
+import { calcularTudo, CalculosCompletos } from '../services/calculations.service';
+import { gerarRelatorioCompleto } from '../services/reportGenerator.service';
 
 interface GenerateReportBody {
   userData: {
@@ -35,14 +36,14 @@ interface GenerateReportBody {
 
 export class ReportController {
   /**
-   * Gera um novo relatório astrológico
+   * Gera um novo relatório astrológico COMPLETO com 18 seções
    */
   async generateReport(req: Request, res: Response): Promise<void> {
     const startTime = Date.now();
-    
+
     try {
       console.log('📥 Recebendo requisição de geração de relatório...');
-      
+
       const { userData, calculatedData }: GenerateReportBody = req.body;
 
       // Validação básica
@@ -55,46 +56,71 @@ export class ReportController {
         return;
       }
 
-      if (!userData.primeiroNome || !userData.email) {
+      if (!userData.primeiroNome || !userData.email || !userData.nascimentoISO) {
         console.log('❌ Validação falhou: campos obrigatórios faltando');
         res.status(400).json({
           error: 'Dados incompletos',
-          message: 'primeiroNome e email são obrigatórios'
+          message: 'primeiroNome, email e nascimentoISO são obrigatórios'
         });
         return;
       }
 
       console.log(`✅ Dados validados para: ${userData.primeiroNome} (${userData.email})`);
 
+      // Parsear data de nascimento
+      const nascimentoDate = new Date(userData.nascimentoISO);
+      const dia = nascimentoDate.getUTCDate();
+      const mes = nascimentoDate.getUTCMonth() + 1; // JavaScript months are 0-indexed
+      const anoNascimento = nascimentoDate.getUTCFullYear();
+
+      console.log(`📅 Data de nascimento: ${dia}/${mes}/${anoNascimento}`);
+
       // Gerar slug único
       const timestamp = Date.now();
       const slug = `${userData.primeiroNome.toLowerCase().replace(/[^a-z0-9]/g, '')}-${timestamp}`;
 
       console.log(`🔖 Slug gerado: ${slug}`);
-      
-      // Gerar conteúdo personalizado com Claude IA
-      console.log('🤖 Gerando textos personalizados com Claude IA...');
-      let aiPersonalizedText = null;
-      
-      try {
-        aiPersonalizedText = await anthropicService.generatePersonalizedContent(userData, calculatedData);
-        console.log('✅ Textos IA gerados com sucesso!');
-      } catch (aiError: any) {
-        console.warn('⚠️  Falha ao gerar com IA, continuando sem conteúdo personalizado:', aiError.message);
-        // Continua sem IA se falhar
-      }
-      
-      // Preparar dados JSON para o frontend renderizar com React
+
+      // ========================================
+      // NOVO: Calcular TUDO usando o serviço completo
+      // ========================================
+      console.log('🔢 Calculando todos os dados astrológicos e numerológicos...');
+      const calculos: CalculosCompletos = calcularTudo(
+        userData.primeiroNome,
+        dia,
+        mes,
+        anoNascimento
+      );
+      console.log(`✅ Cálculos completos: Ano Pessoal ${calculos.anoPessoal}, Arcano Pessoal ${calculos.arcanoPessoalNum} (${calculos.arcanoPessoal})`);
+
+      // ========================================
+      // NOVO: Gerar relatório completo com 19 seções
+      // ========================================
+      console.log('📝 Gerando relatório completo com 19 seções...');
+
+      // Gerar HTML do relatório completo
+      const reportContent = gerarRelatorioCompleto(calculos);
+      console.log(`✅ Conteúdo gerado: ${reportContent.length} caracteres`);
+
+      // Envolver com documento completo (CSS Premium)
+      const reportHtml = wrapWithFullDocument(reportContent, userData.primeiroNome);
+      console.log(`✅ HTML final com CSS: ${reportHtml.length} caracteres`);
+
+      // Preparar dados JSON completos para o frontend
       const reportDataJson = {
         userData,
-        calculatedData,
+        calculatedData: {
+          ...calculatedData,
+          // Adicionar todos os novos cálculos
+          calculosCompletos: calculos,
+        },
         generatedAt: new Date().toISOString(),
-        aiContent: aiPersonalizedText, // ← Textos da IA em JSON
       };
 
       console.log('💾 Salvando no banco de dados...');
 
-      // Salvar no Supabase de forma otimizada
+      // Salvar no Supabase
+      const portalMesNome = getMonthName(calculos.portalMonths[0] || 1);
       const { data: report, error: dbError } = await supabaseAdmin
         .from('reports')
         .insert({
@@ -105,15 +131,15 @@ export class ReportController {
           data_nascimento: userData.nascimentoISO,
           cidade_nascimento: userData.cidadeUF || '',
           email: userData.email,
-          signo: calculatedData.signoSolar || 'Não informado',
-          idade: calculatedData.idade || 0,
-          ano_pessoal: calculatedData.numerologia?.anoPessoal || 1,
-          arcano_pessoal_nome: calculatedData.tarot?.arcanoPessoal?.nome || 'Não informado',
-          arcano_2026_nome: calculatedData.tarot?.arcano2026?.nome || 'Não informado',
-          portal_mes: getMonthName(calculatedData.portal?.mes || 1),
+          signo: calculos.signo,
+          idade: calculos.idade,
+          ano_pessoal: calculos.anoPessoal,
+          arcano_pessoal_nome: calculos.arcanoPessoal,
+          arcano_2026_nome: calculos.arcano2026,
+          portal_mes: portalMesNome,
           report_data_json: reportDataJson,
           amostra_html: null,
-          relatorio_completo_html: null,
+          relatorio_completo_html: reportHtml,
           is_paid: true,
           report_type: 'complete',
         })
@@ -126,20 +152,20 @@ export class ReportController {
       }
 
       const duration = Date.now() - startTime;
-      console.log(`✅ Relatório salvo com sucesso! ID: ${report.id} | Tempo: ${duration}ms`);
+      console.log(`✅ Relatório COMPLETO salvo! ID: ${report.id} | Tempo: ${duration}ms`);
 
-      // Resposta rápida
+      // Resposta
       res.status(201).json({
         success: true,
         slug: report.slug,
         reportId: report.id,
-        message: 'Relatório gerado com sucesso!'
+        message: 'Relatório completo gerado com sucesso!'
       });
-      
+
     } catch (error: any) {
       const duration = Date.now() - startTime;
       console.error(`❌ Erro ao gerar relatório (${duration}ms):`, error);
-      
+
       res.status(500).json({
         error: 'Erro interno no servidor',
         message: error.message || 'Ocorreu um erro ao gerar o relatório'
@@ -221,146 +247,6 @@ function getMonthName(month: number): string {
     'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
   ];
   return months[month] || 'janeiro';
-}
-
-function generateSampleHTML(userData: any, calculatedData: any): string {
-  return `
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mapa do Glow Up 2026 - ${userData.primeiroNome}</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;600;700&display=swap');
-    body { font-family: 'Inter', sans-serif; }
-    h1, h2, h3 { font-family: 'Playfair Display', serif; }
-  </style>
-</head>
-<body class="bg-gradient-to-br from-purple-50 via-pink-50 to-yellow-50 min-h-screen">
-  <div class="max-w-4xl mx-auto px-4 py-12">
-    <!-- Header -->
-    <header class="text-center mb-12">
-      <h1 class="text-5xl md:text-6xl font-bold text-gray-800 mb-4">
-        ${userData.primeiroNome} ${userData.sobrenome || ''}
-      </h1>
-      <p class="text-2xl text-purple-600 mb-2">${calculatedData.signoSolar}</p>
-      <p class="text-lg text-gray-600">Mapa do Glow Up 2026</p>
-    </header>
-
-    <!-- Ano Pessoal -->
-    <section class="bg-white/80 backdrop-blur-sm rounded-3xl p-8 mb-8 shadow-lg">
-      <h2 class="text-3xl font-bold text-gray-800 mb-4">
-        ✨ Seu Ano Pessoal: ${calculatedData.numerologia.anoPessoal}
-      </h2>
-      <p class="text-lg text-gray-700 leading-relaxed mb-4">
-        Em 2026, você está em um Ano Pessoal ${calculatedData.numerologia.anoPessoal}. 
-        Este é um período especial de ${getAnoPessoalTheme(calculatedData.numerologia.anoPessoal)}.
-      </p>
-      <p class="text-gray-600">
-        Este número revela o ritmo energético que vai guiar seu ano. 
-        No relatório completo, você terá 6 páginas detalhando como aproveitar 
-        cada fase deste ciclo.
-      </p>
-    </section>
-
-    <!-- Arcanos -->
-    <section class="bg-gradient-to-r from-purple-100 to-pink-100 rounded-3xl p-8 mb-8 shadow-lg">
-      <h2 class="text-3xl font-bold text-gray-800 mb-4">
-        🔮 Seus Arcanos de 2026
-      </h2>
-      <div class="grid md:grid-cols-2 gap-6">
-        <div class="bg-white/60 rounded-2xl p-6">
-          <h3 class="text-xl font-bold text-purple-700 mb-2">
-            Arcano Pessoal
-          </h3>
-          <p class="text-2xl font-bold text-gray-800 mb-2">
-            ${calculatedData.tarot.arcanoPessoal.nome}
-          </p>
-          <p class="text-gray-600">
-            Este arcano revela sua essência e missão de vida.
-          </p>
-        </div>
-        <div class="bg-white/60 rounded-2xl p-6">
-          <h3 class="text-xl font-bold text-pink-700 mb-2">
-            Arcano 2026
-          </h3>
-          <p class="text-2xl font-bold text-gray-800 mb-2">
-            ${calculatedData.tarot.arcano2026.nome}
-          </p>
-          <p class="text-gray-600">
-            O clima energético que vai reger seu ano.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Mês Portal -->
-    <section class="bg-yellow-50 border-2 border-yellow-300 rounded-3xl p-8 mb-8">
-      <h2 class="text-3xl font-bold text-gray-800 mb-4">
-        🌟 Seu Mês Portal: ${getMonthName(calculatedData.portal.mes)}
-      </h2>
-      <p class="text-lg text-gray-700 mb-4">
-        ${getMonthName(calculatedData.portal.mes)} será um mês especialmente poderoso para você! 
-        É quando as energias se alinham perfeitamente com seus objetivos.
-      </p>
-      <p class="text-gray-600">
-        No relatório completo, você terá um calendário detalhado com os 3 portais 
-        energéticos do ano e rituais específicos para cada um.
-      </p>
-    </section>
-
-    <!-- CTA -->
-    <section class="text-center bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl p-12 text-white">
-      <h2 class="text-3xl font-bold mb-4">
-        Esta é apenas uma amostra! ✨
-      </h2>
-      <p class="text-lg mb-6">
-        O relatório completo tem 50 páginas com análise mês a mês, 
-        scripts personalizados, checklists práticos e muito mais.
-      </p>
-      <button class="bg-white text-purple-600 px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transition-transform">
-        Ver Relatório Completo
-      </button>
-    </section>
-
-    <!-- Footer -->
-    <footer class="text-center mt-12 text-gray-600">
-      <p>© 2026 Jovemística • Mapa do Glow Up</p>
-    </footer>
-  </div>
-</body>
-</html>
-  `;
-}
-
-function generateCompleteHTML(userData: any, calculatedData: any): string {
-  // Por enquanto, retorna a amostra expandida
-  // TODO: Implementar geração completa com IA
-  return generateSampleHTML(userData, calculatedData) + `
-    <!-- Placeholder para relatório completo - TODO: implementar com IA -->
-    <div class="max-w-4xl mx-auto px-4 py-8">
-      <p class="text-center text-gray-600">
-        Relatório completo em desenvolvimento...
-      </p>
-    </div>
-  `;
-}
-
-function getAnoPessoalTheme(ano: number): string {
-  const themes: Record<number, string> = {
-    1: 'novos começos e iniciativas',
-    2: 'parcerias e relacionamentos',
-    3: 'comunicação e expressão criativa',
-    4: 'construção e estruturação',
-    5: 'mudanças e liberdade',
-    6: 'responsabilidade e família',
-    7: 'espiritualidade e autoconhecimento',
-    8: 'poder e manifestação',
-    9: 'conclusão e transformação'
-  };
-  return themes[ano] || 'crescimento pessoal';
 }
 
 export const reportController = new ReportController();
