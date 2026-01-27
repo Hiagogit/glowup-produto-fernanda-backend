@@ -147,16 +147,17 @@ export class KlivoService {
         ],
       };
 
-      if (payload.tracking) {
-        requestBody.tracking = {
-          src: payload.tracking.src || '',
-          utm_source: payload.tracking.utm_source || '',
-          utm_medium: payload.tracking.utm_medium || '',
-          utm_campaign: payload.tracking.utm_campaign || '',
-          utm_term: payload.tracking.utm_term || '',
-          utm_content: payload.tracking.utm_content || '',
-        };
-      }
+      // Sempre enviar tracking para a Klivo
+      requestBody.tracking = {
+        src: payload.tracking?.src || '',
+        utm_source: payload.tracking?.utm_source || '',
+        utm_medium: payload.tracking?.utm_medium || '',
+        utm_campaign: payload.tracking?.utm_campaign || '',
+        utm_term: payload.tracking?.utm_term || '',
+        utm_content: payload.tracking?.utm_content || '',
+      };
+
+      console.log('🔍 Tracking enviado para Klivo:', JSON.stringify(requestBody.tracking, null, 2));
       
       console.log('📤 Request body:', JSON.stringify(requestBody, null, 2));
       

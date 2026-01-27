@@ -26,6 +26,8 @@ export class PaymentController {
         });
       }
 
+      console.log('📊 Tracking recebido do frontend:', JSON.stringify(tracking, null, 2));
+
       // Criar transação na Klivo
       const transaction = await klivoService.createTransaction({
         amount: amount,
