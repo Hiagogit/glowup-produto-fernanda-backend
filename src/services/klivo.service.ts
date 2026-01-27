@@ -12,6 +12,14 @@ interface CreateTransactionPayload {
     cpf?: string;
   };
   metadata?: Record<string, any>;
+  tracking?: {
+    src?: string;
+    utm_source?: string;
+    utm_medium?: string;
+    utm_campaign?: string;
+    utm_term?: string;
+    utm_content?: string;
+  };
 }
 
 interface KlivoTransactionResponse {
@@ -116,7 +124,7 @@ export class KlivoService {
       const PRODUCT_HASH = '1vuddx4es3';
       const OFFER_HASH = 'ad70imkfyt';
       
-      const requestBody = {
+      const requestBody: Record<string, any> = {
         amount: payload.amount,
         offer_hash: OFFER_HASH,
         payment_method: 'pix',
@@ -138,6 +146,10 @@ export class KlivoService {
           }
         ],
       };
+
+      if (payload.tracking) {
+        requestBody.tracking = payload.tracking;
+      }
       
       console.log('📤 Request body:', JSON.stringify(requestBody, null, 2));
       

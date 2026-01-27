@@ -9,7 +9,7 @@ export class PaymentController {
    */
   async createPayment(req: Request, res: Response) {
     try {
-      const { amount, name, email, cpf, reportData } = req.body;
+      const { amount, name, email, cpf, reportData, tracking } = req.body;
 
       // Validações
       if (!amount || !name || !email) {
@@ -39,6 +39,7 @@ export class PaymentController {
           product: 'mapa-glow-up',
           reportData: reportData,
         },
+        tracking: tracking,
       });
 
       // Salvar transação no banco de dados  
@@ -59,6 +60,13 @@ export class PaymentController {
           pix_expires_at: transaction.pix?.expires_at,
           created_at: transaction.created_at,
           transaction_url: transaction.url,
+          utm_source: tracking?.utm_source || null,
+          utm_medium: tracking?.utm_medium || null,
+          utm_campaign: tracking?.utm_campaign || null,
+          utm_content: tracking?.utm_content || null,
+          utm_term: tracking?.utm_term || null,
+          referrer: tracking?.src || null,
+          tracking_data: tracking || null,
         })
         .select()
         .single();
