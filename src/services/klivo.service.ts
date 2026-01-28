@@ -37,6 +37,7 @@ interface KlivoTransactionResponse {
     pix_url: string | null;
     pix_qr_code: string | null;
     qr_code_base64: string | null;
+    expires_at?: string | null;
   };
   billet?: {
     url: string | null;
@@ -193,7 +194,7 @@ export class KlivoService {
   async isTransactionPaid(transactionId: string): Promise<boolean> {
     try {
       const transaction = await this.getTransaction(transactionId);
-      return transaction.status === 'paid';
+      return transaction.payment_status === 'paid';
     } catch (error) {
       return false;
     }

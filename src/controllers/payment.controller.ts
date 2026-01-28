@@ -104,6 +104,7 @@ export class PaymentController {
           method: transaction.payment_method || transaction.method,
           pix: transaction.pix ? {
             qrCode: transaction.pix.pix_qr_code,
+            qrCodeBase64: transaction.pix.qr_code_base64,
             qrCodeUrl: transaction.pix.pix_url,
             copyPaste: transaction.pix.pix_qr_code,
             expiresAt: transaction.pix.expires_at,
