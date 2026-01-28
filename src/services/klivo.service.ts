@@ -132,8 +132,8 @@ export class KlivoService {
         customer: {
           name: payload.customer.name,
           email: payload.customer.email,
-          phone_number: '11987654321', // Telefone válido
-          document: '08080306125', // CPF válido para teste
+          phone_number: '11987654321',
+          document: payload.customer.cpf || '00000000000',
         },
         cart: [
           {
